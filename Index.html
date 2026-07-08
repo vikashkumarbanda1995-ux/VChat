@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VChat</title>
+
+<style>
+body{
+margin:0;
+font-family:Arial,sans-serif;
+background:#0b141a;
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+}
+
+.box,#chat{
+background:white;
+width:340px;
+padding:20px;
+border-radius:15px;
+text-align:center;
+}
+
+h1,h2{
+color:#25D366;
+}
+
+input{
+width:90%;
+padding:10px;
+margin:10px 0;
+border-radius:8px;
+border:1px solid gray;
+}
+
+button{
+width:95%;
+padding:10px;
+background:#25D366;
+color:white;
+border:none;
+border-radius:8px;
+font-size:16px;
+cursor:pointer;
+}
+
+#messages{
+height:250px;
+border:1px solid gray;
+overflow:auto;
+padding:10px;
+margin-bottom:10px;
+text-align:left;
+background:#f5f5f5;
+}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+
+<h1>VChat</h1>
+
+<p>Private Chat Between Two Friends</p>
+
+<input id="username" placeholder="Enter Name">
+
+<button onclick="login()">Login</button>
+
+</div>
+
+<div id="chat" style="display:none">
+
+<h2>VChat</h2>
+
+<p id="welcome"></p>
+
+<div id="messages"></div>
+
+<input id="msg" placeholder="Type Message">
+
+<button onclick="sendMessage()">Send</button>
+
+</div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+
+import {
+getDatabase,
+ref,
+push,
+onChildAdded
+} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js";
+
+const firebaseConfig = {
+
+apiKey:"AIzaSyAFmWxRpMPBslfxSpVt1NJoGPIRrqIDUng",
+
+authDomain:"vchat-72067.firebaseapp.com",
+
+databaseURL:"https://vchat-72067-default-rtdb.asia-southeast1.firebasedatabase.app",
+
+projectId:"vchat-72067",
+
+storageBucket:"vchat-72067.firebasestorage.app",
+
+messagingSenderId:"455947882510",
+
+appId:"1:455947882510:web:6d98dedb3db8c636a7ac5f"
+
+};
+
+const app=initializeApp(firebaseConfig);
+
+const db=getDatabase(app);
+
+let user="";
+window.login=function(){
+
+user=document.getElementById("username").value.trim().toLowerCase();
+
+if(user!="vivek" && user!="anil"){
+alert("Access Denied ❌");
+return;
+}
+
+document.querySelector(".box").style.display="none";
+
+document.getElementById("chat").style.display="block";
+
+document.getElementById("welcome").innerHTML="Welcome "+user;
+
+};
+
+
+window.sendMessage=function(){
+
+let msg=document.getElementById("msg").value.trim();
+
+if(msg=="") return;
+
+push(ref(db,"messages"),{
+
+name:user,
+
+text:msg,
+
+time:Date.now()
+
+});
+
+document.getElementById("msg").value="";
+
+};
+
+
+onChildAdded(ref(db,"messages"),function(snapshot){
+
+let data=snapshot.val();
+
+document.getElementById("messages").innerHTML+=
+"<p><b>"+data.name+": </b>"+data.text+"</p>";
+
+document.getElementById("messages").scrollTop=
+document.getElementById("messages").scrollHeight;
+
+});
+</script>
+
+</body>
+</html>
