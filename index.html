@@ -151,7 +151,10 @@ name:user,
 
 text:msg,
 
-time:Date.now()
+time:new Date().toLocaleTimeString([],{
+hour:"2-digit",
+minute:"2-digit"
+})
 
 });
 
@@ -165,7 +168,9 @@ onChildAdded(ref(db,"messages"),function(snapshot){
 let data=snapshot.val();
 
 document.getElementById("messages").innerHTML+=
-"<p><b>"+data.name+": </b>"+data.text+"</p>";
+"<p><b>"+data.name+"</b><br>"
++data.text+
+"<br><small>"+data.time+"</small></p>";
 
 document.getElementById("messages").scrollTop=
 document.getElementById("messages").scrollHeight;
