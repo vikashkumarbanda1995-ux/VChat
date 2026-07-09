@@ -102,12 +102,14 @@ margin-top:4px;
 <div id="chat" style="display:none">
 
 <h2>VChat</h2>
+<p id="status" style="color:green;font-weight:bold;">🟢 Connecting...</p>
 
 <p id="welcome"></p>
 
 <div id="messages"></div>
 
 <input id="msg" placeholder="Type Message">
+<p id="typing" style="color:gray;font-size:13px;height:18px;"></p>
 
 <button onclick="sendMessage()">Send</button>
 
@@ -121,6 +123,8 @@ import {
 getDatabase,
 ref,
 push,
+set,
+onValue,
 onChildAdded
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js";
 
@@ -145,7 +149,8 @@ appId:"1:455947882510:web:6d98dedb3db8c636a7ac5f"
 const app=initializeApp(firebaseConfig);
 
 const db=getDatabase(app);
-
+const typingRef = ref(db,"typing");
+const statusRef = ref(db, "status");
 let user="";
 window.login=function(){
 
@@ -161,6 +166,11 @@ document.querySelector(".box").style.display="none";
 document.getElementById("chat").style.display="block";
 
 document.getElementById("welcome").innerHTML="Welcome "+user;
+set(statusRef, user + " is Online 🟢");
+
+onValue(statusRef, (snapshot) => {
+  document.getElementById("status").innerHTML = snapshot.val();
+});
 
 };
 
@@ -168,6 +178,7 @@ document.getElementById("welcome").innerHTML="Welcome "+user;
 window.sendMessage=function(){
 
 let msg=document.getElementById("msg").value.trim();
+set(typingRef,"");
 
 if(msg=="") return;
 
@@ -185,9 +196,28 @@ minute:"2-digit"
 });
 
 document.getElementById("msg").value="";
+document.getElementById("msg").focus();
 
 };
+document.getElementById("msg").addEventListener("input",function(){
 
+if(this.value.trim()!=""){
+set(typingRef,user);
+}else{
+set(typingRef,"");
+}
+
+});
+
+document.getElementById("msg").addEventListener("keypress", function(e){
+
+if(e.key==="Enter"){
+
+sendMessage();
+
+}
+
+});
 
 onChildAdded(ref(db,"messages"),function(snapshot){
 
@@ -203,9 +233,28 @@ ${data.text}
 <div class="time">${data.time}</div>
 </div>
 `;
+let box = document.getElementById("messages");
+box.scrollTop = box.scrollHeight;
 
 document.getElementById("messages").scrollTop=
 document.getElementById("messages").scrollHeight;
+
+});
+
+onValue(typingRef,function(snapshot){
+
+let typingUser = snapshot.val();
+
+if(typingUser && typingUser != user){
+
+document.getElementById("typing").innerHTML =
+"✍️ " + typingUser + " is typing...";
+
+}else{
+
+document.getElementById("typing").innerHTML = "";
+
+}
 
 });
 </script>
