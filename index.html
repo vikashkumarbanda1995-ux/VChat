@@ -82,6 +82,35 @@ color:gray;
 text-align:right;
 margin-top:4px;
 }
+.dark{
+background:#121212;
+color:white;
+}
+
+.dark #chat,
+.dark .box{
+background:#1e1e1e;
+color:white;
+}
+
+.dark #messages{
+background:#222;
+}
+
+.dark .other{
+background:#333;
+color:white;
+}
+
+.dark input{
+background:#333;
+color:white;
+border:1px solid #555;
+}
+.reaction{
+font-size:20px;
+margin-top:5px;
+}
 </style>
 </head>
 
@@ -102,6 +131,7 @@ margin-top:4px;
 <div id="chat" style="display:none">
 
 <h2>VChat</h2>
+<button onclick="toggleTheme()" id="themeBtn">🌙 Dark Mode</button>
 <p id="status" style="color:green;font-weight:bold;">🟢 Connecting...</p>
 
 <p id="welcome"></p>
@@ -204,11 +234,37 @@ document.getElementById("msg").focus();
 
 }
 
+window.reactMessage = function(id, emoji){
+
+update(ref(db,"messages/"+id),{
+reaction: emoji
+});
+
+}
+
 window.deleteMessage = function(id){
 
 if(confirm("Delete this message?")){
 
 remove(ref(db,"messages/"+id));
+
+}
+
+}
+
+window.toggleTheme = function(){
+
+document.body.classList.toggle("dark");
+
+let btn = document.getElementById("themeBtn");
+
+if(document.body.classList.contains("dark")){
+
+btn.innerHTML="☀️ Light Mode";
+
+}else{
+
+btn.innerHTML="🌙 Dark Mode";
 
 }
 
@@ -289,10 +345,20 @@ document.getElementById("messages").innerHTML +=
 <b>${data.name}</b><br>
 ${data.text}
 <div class="time">
+<div class="reaction">${data.reaction || ""}</div>
 ${data.time}
 ${data.name==user
 ? (data.seen ? "✔✔ Seen" : "✔ Sent")
 : ""}
+</div>
+
+<div class="reaction">${data.reaction || ""}</div>
+
+<div style="margin-top:5px;">
+<button onclick="reactMessage('${id}','👍')" style="width:auto;padding:2px 6px;">👍</button>
+<button onclick="reactMessage('${id}','❤️')" style="width:auto;padding:2px 6px;">❤️</button>
+<button onclick="reactMessage('${id}','😂')" style="width:auto;padding:2px 6px;">😂</button>
+<button onclick="reactMessage('${id}','😮')" style="width:auto;padding:2px 6px;">😮</button>
 </div>
 
 ${delBtn}
