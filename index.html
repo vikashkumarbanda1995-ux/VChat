@@ -109,6 +109,15 @@ margin-top:4px;
 <div id="messages"></div>
 
 <input id="msg" placeholder="Type Message">
+<div id="emojiBox" style="margin:5px 0;">
+<span onclick="addEmoji('😀')" style="cursor:pointer;font-size:22px;">😀</span>
+<span onclick="addEmoji('😂')" style="cursor:pointer;font-size:22px;">😂</span>
+<span onclick="addEmoji('❤️')" style="cursor:pointer;font-size:22px;">❤️</span>
+<span onclick="addEmoji('👍')" style="cursor:pointer;font-size:22px;">👍</span>
+<span onclick="addEmoji('😎')" style="cursor:pointer;font-size:22px;">😎</span>
+<span onclick="addEmoji('🎉')" style="cursor:pointer;font-size:22px;">🎉</span>
+</div>
+
 <p id="typing" style="color:gray;font-size:13px;height:18px;"></p>
 
 <button onclick="sendMessage()">Send</button>
@@ -125,6 +134,7 @@ ref,
 push,
 set,
 onValue,
+update,
 onChildAdded
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js";
 
@@ -166,6 +176,17 @@ document.querySelector(".box").style.display="none";
 document.getElementById("chat").style.display="block";
 
 document.getElementById("welcome").innerHTML="Welcome "+user;
+onValue(ref(db,"messages"), (snapshot) => {
+  snapshot.forEach((child) => {
+    let data = child.val();
+
+    if (data.name !== user && !data.seen) {
+      update(ref(db, "messages/" + child.key), {
+        seen: true
+      });
+    }
+  });
+});
 set(statusRef, user + " is Online 🟢");
 
 onValue(statusRef, (snapshot) => {
@@ -174,6 +195,13 @@ onValue(statusRef, (snapshot) => {
 
 };
 
+window.addEmoji = function(emoji){
+
+document.getElementById("msg").value += emoji;
+
+document.getElementById("msg").focus();
+
+}
 
 window.sendMessage=function(){
 
@@ -191,8 +219,8 @@ text:msg,
 time:new Date().toLocaleTimeString([],{
 hour:"2-digit",
 minute:"2-digit"
-})
-
+}),
+seen:false
 });
 
 document.getElementById("msg").value="";
@@ -223,6 +251,8 @@ onChildAdded(ref(db,"messages"),function(snapshot){
 
 let data=snapshot.val();
 
+let id = snapshot.key;
+
 let cls = (data.name == user) ? "me" : "other";
 
 document.getElementById("messages").innerHTML +=
@@ -230,7 +260,10 @@ document.getElementById("messages").innerHTML +=
 <div class="msg ${cls}">
 <b>${data.name}</b><br>
 ${data.text}
-<div class="time">${data.time}</div>
+<div class="time">
+${data.time}
+${data.seen ? " ✔️ Seen" : ""}
+</div>
 </div>
 `;
 let box = document.getElementById("messages");
@@ -260,4 +293,4 @@ document.getElementById("typing").innerHTML = "";
 </script>
 
 </body>
-</html>
+</html> 
