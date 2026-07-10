@@ -135,6 +135,7 @@ push,
 set,
 onValue,
 update,
+remove,
 onChildAdded
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js";
 
@@ -203,6 +204,16 @@ document.getElementById("msg").focus();
 
 }
 
+window.deleteMessage = function(id){
+
+if(confirm("Delete this message?")){
+
+remove(ref(db,"messages/"+id));
+
+}
+
+}
+
 window.sendMessage=function(){
 
 let msg=document.getElementById("msg").value.trim();
@@ -247,13 +258,30 @@ sendMessage();
 
 });
 
-onChildAdded(ref(db,"messages"),function(snapshot){
+onValue(ref(db,"messages"),function(snapshot){
 
-let data=snapshot.val();
+document.getElementById("messages").innerHTML = "";
 
-let id = snapshot.key;
+snapshot.forEach((child)=>{
+
+let data = child.val();
+
+let id = child.key;
+
+if(data.name != user && !data.seen){
+update(ref(db,"messages/"+id),{
+seen:true
+});
+}
 
 let cls = (data.name == user) ? "me" : "other";
+let delBtn = "";
+
+if(data.name == user){
+
+delBtn = `<br><button onclick="deleteMessage('${id}')" style="background:red;padding:4px 8px;font-size:12px;width:auto;">🗑 Delete</button>`;
+
+}
 
 document.getElementById("messages").innerHTML +=
 `
@@ -262,8 +290,13 @@ document.getElementById("messages").innerHTML +=
 ${data.text}
 <div class="time">
 ${data.time}
-${data.seen ? " ✔️ Seen" : ""}
+${data.name==user
+? (data.seen ? "✔✔ Seen" : "✔ Sent")
+: ""}
 </div>
+
+${delBtn}
+
 </div>
 `;
 let box = document.getElementById("messages");
@@ -271,6 +304,8 @@ box.scrollTop = box.scrollHeight;
 
 document.getElementById("messages").scrollTop=
 document.getElementById("messages").scrollHeight;
+
+});
 
 });
 
