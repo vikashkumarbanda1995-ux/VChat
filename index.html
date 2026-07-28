@@ -1,503 +1,1272 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VChat</title>
 
 <style>
-body{
+*{
 margin:0;
+padding:0;
+box-sizing:border-box;
 font-family:Arial,sans-serif;
+}
+
+body{
 background:#0b141a;
+height:100vh;
 display:flex;
 justify-content:center;
 align-items:center;
-height:100vh;
+overflow:hidden;
 }
 
-.box,#chat{
+#splash{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:#075E54;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+color:white;
+z-index:1000;
+animation:hideSplash 3s forwards;
+animation-delay:2s;
+}
+
+#logo{
+width:120px;
+height:120px;
+border-radius:50%;
 background:white;
-width:95%;
-max-width:400px;
-padding:10px;
-border-radius:5px;
-text-align:center;
+color:#075E54;
+display:flex;
+justify-content:center;
+align-items:center;
+font-size:55px;
+font-weight:bold;
+box-shadow:0 0 25px rgba(255,255,255,.4);
 }
 
-h1,h2{
-color:#25D366;
+#appName{
+margin-top:20px;
+font-size:35px;
+font-weight:bold;
+letter-spacing:2px;
+}
+
+#tag{
+margin-top:10px;
+font-size:15px;
+opacity:.9;
+}
+
+@keyframes hideSplash{
+to{
+opacity:0;
+visibility:hidden;
+}
+}
+
+#login{
+display: none; /* शुरुआत में छुपा रहेगा */
+width:95%;
+max-width:420px;
+background:#fff;
+border-radius:20px;
+padding:25px;
+box-shadow:0 10px 30px rgba(0,0,0,.4);
+animation:show .8s;
+}
+
+@keyframes show{
+from{
+transform:translateY(40px);
+opacity:0;
+}
+to{
+transform:translateY(0);
+opacity:1;
+}
+}
+
+.title{
+text-align:center;
+font-size:32px;
+color:#075E54;
+font-weight:bold;
+}
+
+.sub{
+text-align:center;
+margin:10px 0 25px;
+color:#666;
 }
 
 input{
-width:90%;
-padding:10px;
-margin:15px 0;
-border-radius:1px;
-border:1px solid gray;
+width:100%;
+padding:15px;
+font-size:16px;
+border:1px solid #ccc;
+border-radius:12px;
+outline:none;
+margin-bottom:18px;
+}
+
+input:focus{
+border-color:#25D366;
 }
 
 button{
-width:95%;
-padding:10px;
-background:#25D366;
-color:black;
+width:100%;
+padding:15px;
 border:none;
-border-radius:8px;
-font-size:18px;
-cursor:pointer;
-}
-
-#messages{
-height:580px;
-border:1px solid #ccc;
-overflow-y:auto;
-padding:10px;
-margin-bottom:10px;
-background:#ece5dd;
-display:flex;
-flex-direction:column;
-}
-
-.msg{
-max-width:75%;
-padding:10px 12px;
-margin:8px 0;
-border-radius:8px;
-position:relative;
-word-wrap:break-word;
-box-shadow:0 1px 2px rgba(0,0,0,0.2);
-}
-
-.me{
-background:#dcf8c6;
-align-self:flex-end;
-border-top-right-radius:2px;
-}
-
-.other{
-background:white;
-align-self:flex-start;
-border-top-left-radius:2px;
-}
-
-.time{
-font-size:11px;
-color:gray;
-text-align:right;
-margin-top:4px;
-}
-.dark{
-background:#121212;
-color:white;
-}
-
-.dark #chat,
-.dark .box{
-background:#1e1e1e;
-color:white;
-}
-
-.dark #messages{
-background:#222;
-}
-
-.dark .other{
-background:#333;
-color:white;
-}
-
-.dark input{
-background:#333;
-color:white;
-border:1px solid #555;
-}
-.reaction{
+border-radius:12px;
+background:#25D366;
 font-size:20px;
-margin-top:5px;
+font-weight:bold;
+cursor:pointer;
+margin-top:12px;
 }
-#header{
+
+button:hover{
+background:#1fb85a;
+}
+
+.footer{
+margin-top:30px;
+text-align:center;
+color:#777;
+font-size:20px;
+}
+#home{
+display:none;
+width:100%;
+height:100vh;
+background:#0b141a;
+color:white;
+}
+
+#homeHeader{
+background:#075E54;
+padding:18px;
+font-size:24px;
+font-weight:bold;
+color:white;
+}
+
+#homeBody{
+padding:20px;
+text-align:center;
+}
+#homeHeader{
+background:#075E54;
+color:white;
+padding:15px 18px;
 display:flex;
 justify-content:space-between;
 align-items:center;
-background:#075E54;
-color:white;
-padding:12px;
-border-radius:10px 10px 0 0;
-margin:-20px -20px 10px -20px;
-}
-
-#chatTitle{
-font-size:22px;
+font-size:24px;
 font-weight:bold;
-letter-spacing:1px;
 }
 
-#status{
-font-size:12px;
-color:#d8ffd8;
-}
-
-#themeBtn{
-width:auto;
-padding:5px 12px;
-background:white;
-color:#075E54;
-border-radius:20px;
-font-size:18px;
-}
-#inputArea{
+#headerIcons{
 display:flex;
-flex-direction:column;
-margin-top:10px;
-}
-
-#inputArea input{
-flex:1;
-margin:0;
-}
-
-#sendBtn{
-width:55px;
-height:55px;
-border-radius:50%;
-padding:0;
+gap:20px;
 font-size:24px;
-}
-
-#emojiBox span{
-font-size:24px;
-margin:0 5px;
 cursor:pointer;
 }
-#inputRow{
+#profileCard{
+background:white;
+border-radius:15px;
+margin:15px;
+padding:18px;
+box-shadow:0 5px 15px rgba(0,0,0,.2);
+}
+
+#profileName{
+font-size:22px;
+font-weight:bold;
+color:#075E54;
+}
+
+#profileEmail{
+font-size:15px;
+color:#666;
+margin-top:6px;
+}
+#chatList{
+margin:15px;
+background:white;
+border-radius:15px;
+overflow:hidden;
+}
+
+.chatItem{
 display:flex;
 align-items:center;
-gap:10px;
-width:100%;
+padding:15px;
+border-bottom:1px solid #eee;
+cursor:pointer;
 }
 
-#inputRow input{
-flex:1;
-margin:0;
-padding:14px;
-border-radius:25px;
+.chatItem:hover{
+background:#f5f5f5;
 }
 
-#attachBtn,
-#sendBtn{
+.avatar{
 width:50px;
 height:50px;
 border-radius:50%;
+background:#25D366;
+color:white;
+display:flex;
+justify-content:center;
+align-items:center;
 font-size:22px;
-padding:0;
+font-weight:bold;
+margin-right:15px;
 }
-#emojiBox{
-margin-top:10px;
-text-align:center;
+
+.chatInfo{
+flex:1;
+}
+
+.chatName{
+font-size:18px;
+font-weight:bold;
+color:#222;
+}
+
+.chatLast{
+font-size:14px;
+color:#666;
+margin-top:4px;
+}
+
+@keyframes msgPop{
+
+0%{
+transform:scale(0.8);
+opacity:0;
+}
+
+60%{
+transform:scale(1.05);
+}
+
+100%{
+transform:scale(1);
+opacity:1;
+}
+
+}
+
+.unreadBadge{
+width:22px;
+height:22px;
+border-radius:50%;
+background:#25D366;
+color:white;
+font-size:12px;
+display:flex;
+justify-content:center;
+align-items:center;
+font-weight:bold;
 }
 </style>
 </head>
 
 <body>
 
-<div class="box">
-
-<h1>VChat</h1>
-
-<p>Private Chat Between Two Friends</p>
-
-<input id="username" placeholder="Enter Name">
-
-<button onclick="login()">Login</button>
-
+<div id="splash">
+<div id="logo">V</div>
+<div id="appName">VChat</div>
+<div id="tag">Secure Messaging</div>
 </div>
 
-<div id="chat" style="display:none">
+<div id="login">
+  
+<div class="title">💚 VChat</div>
 
-<div id="header">
-
-<div>
-<div id="chatTitle">💚 VChat</div>
-<div id="status">🟢 Connecting...</div>
+<div class="sub">
+Welcome to VChat
 </div>
 
-<button onclick="toggleTheme()" id="themeBtn">🌙</button>
+<input
+type="text"
+id="name"
+placeholder="Enter Your Name">
 
+<input
+type="email"
+id="email"
+placeholder="Enter Email Address">
+
+<input
+type="password"
+id="password"
+placeholder="Create Password">
+
+<button onclick="register()">
+Create Account
+</button>
+
+<button onclick="loginUser()">
+Login
+</button>
+
+<div class="footer">
+Developed by Vivek Raj
 </div>
-
-<p id="welcome" style="margin:10px 0;font-weight:bold;color:#555;"></p>
-
-<div id="messages"></div>
-
-<div id="inputArea">
-
-<div id="inputRow">
-
-<button id="attachBtn" onclick="pickFile()">📎</button>
-
-<input id="msg" placeholder="Type Message">
-
-<button onclick="sendMessage()" id="sendBtn">📤</button>
-
-</div>
-
-<div id="emojiBox">
-<span onclick="addEmoji('😀')">😀</span>
-<span onclick="addEmoji('😂')">😂</span>
-<span onclick="addEmoji('❤️')">❤️</span>
-<span onclick="addEmoji('👍')">👍</span>
-<span onclick="addEmoji('😎')">😎</span>
-<span onclick="addEmoji('🎉')">🎉</span>
-</div>
-
-<p id="typing" style="color:gray;font-size:13px;height:18px;"></p>
 
 </div>
 
 <script type="module">
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-
 import {
-getDatabase,
-ref,
-push,
-set,
-onValue,
-update,
-remove,
-onChildAdded
-} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js";
+getStorage,
+ref as storageRef,
+uploadBytes,
+getDownloadURL
+} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-storage.js";
+import { getDatabase, ref, push, set, get, onValue, update, remove, onChildAdded } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js";
+import {
+getAuth,
+createUserWithEmailAndPassword,
+sendEmailVerification,
+signInWithEmailAndPassword,
+GoogleAuthProvider,
+signInWithPopup,
+updateProfile,
+signOut
+} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
 
 const firebaseConfig = {
-
-apiKey:"AIzaSyAFmWxRpMPBslfxSpVt1NJoGPIRrqIDUng",
-
-authDomain:"vchat-72067.firebaseapp.com",
-
-databaseURL:"https://vchat-72067-default-rtdb.asia-southeast1.firebasedatabase.app",
-
-projectId:"vchat-72067",
-
-storageBucket:"vchat-72067.firebasestorage.app",
-
-messagingSenderId:"455947882510",
-
-appId:"1:455947882510:web:6d98dedb3db8c636a7ac5f"
-
+  apiKey: "AIzaSyAFmWxRpMPBslfxSpVt1NJoGPIRrqIDUng",
+  authDomain: "vchat-72067.firebaseapp.com",
+  databaseURL: "https://vchat-72067-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "vchat-72067",
+  storageBucket: "vchat-72067.firebasestorage.app",
+  messagingSenderId: "455947882510",
+  appId: "1:455947882510:web:ebc542adcb434849a7ac5f",
+  measurementId: "G-JNMQ1TY7XN"
 };
 
-const app=initializeApp(firebaseConfig);
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const auth = getAuth(app);
+const storage = getStorage(app);
+window.auth = auth;
+window.db = db;
 
-const db=getDatabase(app);
-const typingRef = ref(db,"typing");
-const statusRef = ref(db, "status");
-let user="";
-window.login=function(){
+// 4 सेकंड बाद स्प्लैश स्क्रीन को हटाकर लॉगिन फॉर्म बिल्कुल सही तरीके से दिखेगा
+setTimeout(function(){
+    document.getElementById("splash").style.display = "none";
+    document.getElementById("login").style.display = "block";
+}, 4000);
+window.register = async function () {
 
-user=document.getElementById("username").value.trim().toLowerCase();
+    let name = document.getElementById("name").value.trim();
+    let email = document.getElementById("email").value.trim();
+    let password = document.getElementById("password").value;
 
-if(user!="vivek" && user!="anil"){
-alert("Access Denied ❌");
-return;
-}
-
-document.querySelector(".box").style.display="none";
-
-document.getElementById("chat").style.display="block";
-
-document.getElementById("welcome").innerHTML="Welcome "+user;
-onValue(ref(db,"messages"), (snapshot) => {
-  snapshot.forEach((child) => {
-    let data = child.val();
-
-    if (data.name !== user && !data.seen) {
-      update(ref(db, "messages/" + child.key), {
-        seen: true
-      });
+    if (name === "") {
+        alert("Enter Your Name");
+        return;
     }
-  });
-});
-set(statusRef, user + " is Online 🟢");
 
-onValue(statusRef, (snapshot) => {
-  document.getElementById("status").innerHTML = snapshot.val();
+    if (email === "") {
+        alert("Enter Email Address");
+        return;
+    }
+
+    if (password.length < 6) {
+        alert("Password must be at least 6 characters");
+        return;
+    }
+
+    try {
+
+        const userCredential =
+            await createUserWithEmailAndPassword(
+                auth,
+                email,
+                password
+            );
+            await updateProfile(userCredential.user, {
+    displayName: name
 });
+
+        await sendEmailVerification(userCredential.user);
+
+        await set(
+            ref(db, "users/" + userCredential.user.uid),
+            {
+                uid: userCredential.user.uid,
+                name: name,
+                email: email,
+                createdAt: Date.now(),
+                online: false,
+                lastSeen:Date.now()
+            }
+        );
+
+        alert(
+            "Account Created Successfully!\n\nPlease verify your email before login."
+        );
+
+    } catch (error) {
+
+        alert(error.message);
+
+    }
 
 };
 
-window.addEmoji = function(emoji){
+window.loginUser = async function () {
 
-document.getElementById("msg").value += emoji;
+    let email = document.getElementById("email").value.trim();
+    let password = document.getElementById("password").value;
 
-document.getElementById("msg").focus();
+    if (email == "") {
+        alert("Enter Email");
+        return;
+    }
 
-}
+    if (password == "") {
+        alert("Enter Password");
+        return;
+    }
 
-window.pickFile = function(){
+    try {
 
-alert("📎 Attachment feature coming soon 😊");
+        const userCredential =
+            await signInWithEmailAndPassword(
+                auth,
+                email,
+                password
+            );
+            await auth.currentUser.reload();
 
-}
+        if (!userCredential.user.emailVerified) {
 
-window.reactMessage = function(id, emoji){
+            alert("Please verify your email first.");
 
-update(ref(db,"messages/"+id),{
-reaction: emoji
+            return;
+
+        }
+
+        alert("Login Successful 🎉");
+        document.getElementById("login").style.display="none";
+document.getElementById("home").style.display="block";
+
+const user = auth.currentUser;
+
+document.getElementById("profileName").innerHTML =
+user.displayName || "User";
+
+document.getElementById("profileEmail").innerHTML =
+user.email;
+loadUsers();
+loadLastMessages();
+update(ref(db,"users/"+auth.currentUser.uid),{
+
+    online:true,
+    lastSeen:Date.now()
+
 });
 
-}
+        // अगला स्टेप: Chat Screen
 
-window.deleteMessage = function(id){
+    }
 
-if(confirm("Delete this message?")){
+    catch (error) {
 
-remove(ref(db,"messages/"+id));
+        alert(error.message);
 
-}
-
-}
-
-window.toggleTheme = function(){
-
-document.body.classList.toggle("dark");
-
-let btn = document.getElementById("themeBtn");
-
-if(document.body.classList.contains("dark")){
-
-btn.innerHTML="☀️ Light Mode";
-
-}else{
-
-btn.innerHTML="🌙 Dark Mode";
+    }
 
 }
 
-}
+window.logout = async function () {
 
-window.sendMessage=function(){
+    await update(
+    ref(db,"users/"+auth.currentUser.uid),
+    {
+        online:false,
+        lastSeen:Date.now()
+    }
+);
+    await signOut(auth);
 
-let msg=document.getElementById("msg").value.trim();
-set(typingRef,"");
-
-if(msg=="") return;
-
-push(ref(db,"messages"),{
-
-name:user,
-
-text:msg,
-
-time:new Date().toLocaleTimeString([],{
-hour:"2-digit",
-minute:"2-digit"
-}),
-seen:false
-});
-
-document.getElementById("msg").value="";
-document.getElementById("msg").focus();
+    document.getElementById("home").style.display = "none";
+    document.getElementById("login").style.display = "block";
 
 };
-document.getElementById("msg").addEventListener("input",function(){
 
-if(this.value.trim()!=""){
-set(typingRef,user);
-}else{
-set(typingRef,"");
-}
+window.openChat = function () {
 
-});
-
-document.getElementById("msg").addEventListener("keypress", function(e){
-
-if(e.key==="Enter"){
-
-sendMessage();
+document.getElementById("home").style.display = "none";
+document.getElementById("chatScreen").style.display = "block";
 
 }
 
-});
+window.backHome = function(){
 
-onValue(ref(db,"messages"),function(snapshot){
+document.getElementById("chatScreen").style.display = "none";
 
-document.getElementById("messages").innerHTML = "";
+document.getElementById("home").style.display = "block";
+
+}
+
+window.openPrivateChat = function(uid, name){
+
+    selectedUserId = uid;
+    selectedUserName = name;
+
+    currentChatRoom = getChatRoomId(
+        auth.currentUser.uid,
+        uid
+    );
+
+    document.getElementById("chatTitle").innerHTML = name;
+    document.getElementById("chatAvatar").innerHTML =
+name.charAt(0).toUpperCase();
+
+    document.getElementById("home").style.display = "none";
+    document.getElementById("chatScreen").style.display = "block";
+    history.pushState({page:"chat"}, "", "");
+
+    document.getElementById("messages").innerHTML = "";
+    
+    const badge = document.getElementById("badge_"+uid);
+
+if(badge){
+
+    badge.style.display="none";
+
+}
+
+    loadPrivateMessages();
+    listenUserStatus();
+    listenTypingStatus();
+
+window.listenTypingStatus = function(){
+
+    if(!selectedUserId) return;
+
+    onValue(
+        ref(db,"typing/"+currentChatRoom+"/"+selectedUserId),
+        (snapshot)=>{
+
+            const data=snapshot.val();
+
+            if(data && data.typing){
+
+                document.getElementById("chatStatus").innerHTML="✍️ Typing...";
+
+            }else{
+
+                onValue(
+                    ref(db,"users/"+selectedUserId),
+                    (snap)=>{
+
+                        const user=snap.val();
+
+                        if(user && user.online){
+
+                            document.getElementById("chatStatus").innerHTML="🟢 Online";
+
+                        }else{
+
+                            document.getElementById("chatStatus").innerHTML="⚫ Offline";
+
+                        }
+
+                    }
+                );
+
+            }
+
+        }
+    );
+
+}
+
+}
+window.loadPrivateMessages = function(){
+
+const messages=document.getElementById("messages");
+
+onValue(ref(db,"chats/"+currentChatRoom),(snapshot)=>{
+
+messages.innerHTML="";
+
+let unreadCount = 0;
 
 snapshot.forEach((child)=>{
 
-let data = child.val();
+const key = child.key;
+const msg = child.val();
 
-let id = child.key;
+if(
+    msg.receiver == auth.currentUser.uid &&
+    msg.seen == false
+){
+  
+  unreadCount++;
 
-if(data.name != user && !data.seen){
-update(ref(db,"messages/"+id),{
-seen:true
-});
+    update(
+        ref(
+            db,
+            "chats/" +
+            currentChatRoom +
+            "/" +
+            key
+        ),
+        {
+            seen:true
+        }
+    );
+
 }
 
-let cls = (data.name == user) ? "me" : "other";
-let delBtn = "";
+const div=document.createElement("div");
+div.style.animation = "msgPop 0.25s ease";
 
-if(data.name == user){
+div.style.padding="10px";
+div.style.margin="8px";
+div.style.borderRadius="10px";
+div.style.maxWidth="75%";
+div.style.width = "fit-content";
+div.style.height = "fit-content";
+div.style.padding = "8px 10px";
+div.style.marginBottom = "8px";
+div.style.wordBreak="break-word";
+div.style.overflowWrap="break-word";
+div.style.whiteSpace="pre-wrap";
 
-delBtn = `<br><button onclick="deleteMessage('${id}')" style="background:red;padding:4px 8px;font-size:12px;width:auto;">🗑 Delete</button>`;
+div.style.display = "table";
+div.style.clear = "both";
+div.style.boxShadow = "0 1px 2px rgba(0,0,0,0.2)";
+div.style.borderRadius = "18px";
+div.style.padding = "10px 12px";
+div.style.lineHeight = "1.5";
+div.style.animation = "msgPop 0.25s ease";
 
-}
+if(msg.sender==auth.currentUser.uid){
 
-document.getElementById("messages").innerHTML +=
-`
-<div class="msg ${cls}">
-<b>${data.name}</b><br>
-${data.text}
-<div class="time">
-${data.time}
-${data.name==user ? (data.seen ? " ✓✓" : " ✓") : ""}
-</div>
-
-${data.reaction ? `<div class="reaction">${data.reaction}</div>` : ""}
-
-<div class="reaction">${data.reaction || ""}</div>
-
-<div style="margin-top:5px;">
-<button onclick="reactMessage('${id}','👍')" style="width:auto;padding:2px 6px;">👍</button>
-<button onclick="reactMessage('${id}','❤️')" style="width:auto;padding:2px 6px;">❤️</button>
-<button onclick="reactMessage('${id}','😂')" style="width:auto;padding:2px 6px;">😂</button>
-<button onclick="reactMessage('${id}','😮')" style="width:auto;padding:2px 6px;">😮</button>
-</div>
-
-${delBtn}
-
-</div>
-`;
-let box = document.getElementById("messages");
-box.scrollTop = box.scrollHeight;
-
-document.getElementById("messages").scrollTop=
-document.getElementById("messages").scrollHeight;
-
-});
-
-});
-
-onValue(typingRef,function(snapshot){
-
-let typingUser = snapshot.val();
-
-if(typingUser && typingUser != user){
-
-document.getElementById("typing").innerHTML =
-"✍️ " + typingUser + " is typing...";
+    div.style.background="#DCF8C6";
+    div.style.marginLeft="auto";
+    div.style.marginRight="6px";
+    div.style.borderTopRightRadius="6px";
 
 }else{
 
-document.getElementById("typing").innerHTML = "";
+    div.style.background="#FFFFFF";
+    div.style.marginLeft="6px";
+    div.style.marginRight="auto";
+    div.style.borderTopLeftRadius="6px";
+
+}
+
+div.innerHTML=`
+${msg.sender!=auth.currentUser.uid ? `<b>${msg.senderName}</b><br>` : ""}
+
+${
+msg.image
+?
+`<img
+src="${msg.image}"
+style="
+max-width:220px;
+border-radius:10px;
+margin-top:5px;
+cursor:pointer;
+">`
+:
+`<span>${msg.text}</span>`
+}
+
+<div style="
+font-size:11px;
+color:#667781;
+text-align:right;
+margin-top:4px;
+display:flex;
+justify-content:flex-end;
+align-items:center;
+gap:4px;
+">
+<span>
+${formatTime(msg.time)}
+</span>
+
+<span>
+${msg.sender==auth.currentUser.uid ? (msg.seen ? "✔✔" : "✔") : ""}
+</span>
+
+</div>
+`;
+
+
+messages.appendChild(div);
+
+});
+
+messages.scrollTo({
+    top: messages.scrollHeight,
+    behavior: "smooth"
+});
+
+});
+
+}
+window.sendMessage = async function () {
+
+    let text = document.getElementById("messageInput").value.trim();
+
+    if(text=="") return;
+
+    const user = auth.currentUser;
+
+    const msgRef = push(
+        ref(db, "chats/" + currentChatRoom)
+    );
+
+    await set(msgRef,{
+
+        sender:user.uid,
+        senderName:user.displayName || "User",
+
+        receiver:selectedUserId,
+
+        text:text,
+
+        time:Date.now(),
+        seen:false
+
+    });
+    await set(
+    ref(db, "chatList/" + auth.currentUser.uid + "/" + selectedUserId),
+    {
+        uid: selectedUserId,
+        name: selectedUserName,
+        lastMessage: text,
+        time: Date.now()
+    }
+);
+
+await set(
+    ref(db, "chatList/" + selectedUserId + "/" + auth.currentUser.uid),
+    {
+        uid: auth.currentUser.uid,
+        name: auth.currentUser.displayName || "User",
+        lastMessage: text,
+        time: Date.now(),
+        unread: 0
+    }
+);
+
+get(
+    ref(db,"chatList/"+selectedUserId+"/"+auth.currentUser.uid+"/unread")
+)
+.then((snap)=>{
+
+    let count = snap.val() || 0;
+
+    update(
+        ref(db,"chatList/"+selectedUserId+"/"+auth.currentUser.uid),
+        {
+            unread: count + 1
+        }
+    );
+
+});
+
+    document.getElementById("messageInput").value="";
+
+}
+
+window.uploadImage = async function(file){
+
+    if(!file) return;
+
+    const fileName = Date.now() + "_" + file.name;
+
+    const imgRef = storageRef(
+        storage,
+        "chatImages/" + fileName
+    );
+
+    try{
+
+        await uploadBytes(imgRef, file);
+
+        const imageURL = await getDownloadURL(imgRef);
+
+        const user = auth.currentUser;
+
+        const msgRef = push(
+            ref(db, "chats/" + currentChatRoom)
+        );
+
+        await set(msgRef,{
+
+            sender:user.uid,
+            senderName:user.displayName || "User",
+            receiver:selectedUserId,
+
+            image:imageURL,
+
+            time:Date.now()
+
+        });
+
+    }catch(err){
+
+        alert("Image Upload Failed!\n" + err.message);
+
+    }
+
+}
+onChildAdded(ref(db, "messages"), (snapshot) => {
+
+    const msg = snapshot.val();
+
+    const div = document.createElement("div");
+
+    div.style.background = "#DCF8C6";
+    div.style.padding = "10px";
+    div.style.margin = "8px";
+    div.style.borderRadius = "10px";
+
+    div.innerHTML = `
+        <b>${msg.name}</b><br>
+        ${msg.text}
+    `;
+
+    document.getElementById("messages").appendChild(div);
+
+    document.getElementById("messages").scrollTop =
+    document.getElementById("messages").scrollHeight;
+
+});
+let selectedUserId = "";
+let selectedUserName = "";
+let currentChatRoom = "";
+
+function getChatRoomId(uid1, uid2){
+
+    return [uid1, uid2].sort().join("_");
+
+}
+function formatTime(time){
+
+    const d = new Date(time);
+
+    return d.toLocaleTimeString([],{
+        hour:"2-digit",
+        minute:"2-digit"
+    });
+
+}
+window.loadUsers = function () {
+
+const chatList = document.getElementById("chatList");
+
+chatList.innerHTML = "";
+
+onValue(ref(db, "users"), (snapshot) => {
+
+chatList.innerHTML = "";
+
+snapshot.forEach((child) => {
+
+const data = child.val();
+
+if (data.uid === auth.currentUser.uid) return;
+
+chatList.innerHTML += `
+
+<div class="chatItem" onclick="openPrivateChat('${data.uid}','${data.name}')">
+
+<div class="avatar">
+${data.name.charAt(0).toUpperCase()}
+</div>
+
+<div class="chatInfo">
+
+<div class="chatName">
+${data.name}
+</div>
+
+<div class="chatLast" id="last_${data.uid}">
+Tap to chat
+</div>
+
+</div>
+
+<div id="badge_${data.uid}" class="unreadBadge" style="display:none;">
+0
+</div>
+
+`;
+
+});
+
+});
+
+}
+window.loadLastMessages = function(){
+
+onValue(
+ref(db,"chatList/"+auth.currentUser.uid),
+
+(snapshot)=>{
+
+snapshot.forEach((child)=>{
+
+const data=child.val();
+
+const last=document.getElementById("last_"+data.uid);
+
+const time=document.getElementById("time_"+data.uid);
+
+if(last){
+
+last.innerHTML=data.lastMessage;
+
+}
+
+if(time){
+
+time.innerHTML=formatTime(data.time);
+
+}
+
+const badge = document.getElementById("badge_"+data.uid);
+
+if(badge && data.unread){
+
+badge.innerHTML = data.unread;
+badge.style.display="flex";
 
 }
 
 });
+
+});
+
+}
+window.typingStatus = function(){
+
+    if(!selectedUserId) return;
+
+    update(
+        ref(db,"typing/"+currentChatRoom+"/"+auth.currentUser.uid),
+        {
+            name:auth.currentUser.displayName || "User",
+            typing:true
+        }
+    );
+
+    clearTimeout(window.typingTimer);
+
+    window.typingTimer = setTimeout(()=>{
+
+        update(
+            ref(db,"typing/"+currentChatRoom+"/"+auth.currentUser.uid),
+            {
+                name:auth.currentUser.displayName || "User",
+                typing:false
+            }
+        );
+
+    },1000);
+}
+
+window.listenUserStatus = function(){
+
+if(!selectedUserId) return;
+
+onValue(ref(db,"users/"+selectedUserId),(snapshot)=>{
+
+const data=snapshot.val();
+
+if(!data) return;
+
+if(data.online){
+
+document.getElementById("chatStatus").innerHTML="🟢 Online";
+
+}else{
+
+document.getElementById("chatStatus").innerHTML="⚫ Offline";
+
+}
+
+});
+
+}
+
+window.toggleEmoji = function(){
+
+    const box = document.getElementById("emojiBox");
+
+    if(box.style.display=="none" || box.style.display==""){
+
+        box.style.display="block";
+
+    }else{
+
+        box.style.display="none";
+
+    }
+
+}
+
+window.addEmoji = function(emoji){
+
+    const input = document.getElementById("messageInput");
+
+    input.value += emoji;
+
+    input.focus();
+
+}
+window.addEventListener("popstate", function () {
+
+    // Agar Chat Screen open hai
+    if (document.getElementById("chatScreen").style.display == "block") {
+
+        backHome();
+        return;
+    }
+
+    // Agar Home open hai
+    if (document.getElementById("home").style.display == "block") {
+
+        let ok = confirm("Exit VChat?");
+        if (ok) {
+            history.back();
+        } else {
+            history.pushState(null, "", location.href);
+        }
+    }
+
+});
+
+// History me ek state add kar do
+history.pushState(null, "", location.href);
 </script>
 
+<div id="home">
+
+
+<div id="homeHeader">
+
+<div>
+💚 VChat
+</div>
+
+<div id="headerIcons">
+🔍
+⋮
+</div>
+
+</div>
+
+<div id="homeBody">
+
+<div id="profileCard">
+
+<div id="profileName">
+User Name
+</div>
+
+<div id="profileEmail">
+Email Address
+</div>
+
+</div>
+
+<div id="chatList"></div>
+
+<p>Welcome to VChat 🎉</p>
+
+<button onclick="logout()">
+Logout
+</button>
+
+</div>
+
+</div>
+<div id="chatScreen" style="display:none;">
+
+<div style="
+background:#075E54;
+color:white;
+padding:15px;
+font-size:22px;
+font-weight:bold;
+display:flex;
+justify-content:space-between;
+align-items:center;
+">
+  
+<div onclick="backHome()" style="
+display:flex;
+align-items:center;
+cursor:pointer;
+flex:1;
+">
+
+<div id="chatAvatar" style="
+width:42px;
+height:42px;
+border-radius:50%;
+background:#25D366;
+display:flex;
+justify-content:center;
+align-items:center;
+font-size:20px;
+font-weight:bold;
+color:white;
+margin-right:10px;
+">
+U
+</div>
+
+<div style="display:flex;flex-direction:column;">
+
+<span id="chatTitle">User</span>
+
+<small id="chatStatus" style="
+font-size:12px;
+color:#d8fdd2;
+">
+Offline
+</small>
+
+</div>
+
+</div>
+
+<div style="display:flex;align-items:center;gap:15px;">
+
+<span style="font-size:22px;cursor:pointer;">📹</span>
+
+<span style="font-size:22px;cursor:pointer;">📞</span>
+
+<span style="font-size:24px;cursor:pointer;">⋮</span>
+
+</div>
+
+</div>
+
+<div id="messages" style="
+height:60vh;
+overflow-y:auto;
+background:#efeae2 url("https://www.transparenttextures.com/patterns/45-degree-fabric-light.png");
+background-size:250px;
+background-repeat:repeat;
+padding:10px;
+">
+
+</div>
+
+<div style="
+display:flex;
+padding:10px;
+background:white;
+">
+<button
+onclick="toggleEmoji()"
+style="
+width:50px;
+margin-right:8px;
+font-size:24px;
+padding:0;
+">
+😊
+</button>
+
+<button
+onclick="document.getElementById('imageInput').click()"
+style="
+width:50px;
+margin-right:8px;
+font-size:22px;
+padding:0;
+">
+📷
+</button>
+<input
+id="messageInput"
+type="text"
+placeholder="Type a message..."
+oninput="typingStatus()"
+style="
+flex:1;
+margin:0;
+">
+
+<button
+onclick="sendMessage()"
+style="
+width:55px;
+height:55px;
+margin-left:10px;
+border-radius:50%;
+background:#25D366;
+color:white;
+font-size:24px;
+padding:0;
+display:flex;
+justify-content:center;
+align-items:center;
+box-shadow:0 3px 10px rgba(0,0,0,0.25);
+">
+➤
+</button>
+<input
+type="file"
+id="imageInput"
+accept="image/*"
+style="display:none"
+onchange="uploadImage(this.files[0])">
+
+</div>
+<div id="emojiBox" style="
+display:none;
+background:white;
+padding:10px;
+font-size:28px;
+overflow-x:auto;
+white-space:nowrap;
+">
+
+<span onclick="addEmoji('😀')">😀</span>
+<span onclick="addEmoji('😂')">😂</span>
+<span onclick="addEmoji('😍')">😍</span>
+<span onclick="addEmoji('😎')">😎</span>
+<span onclick="addEmoji('😭')">😭</span>
+<span onclick="addEmoji('❤️')">❤️</span>
+<span onclick="addEmoji('👍')">👍</span>
+<span onclick="addEmoji('🙏')">🙏</span>
+<span onclick="addEmoji('🔥')">🔥</span>
+<span onclick="addEmoji('🎉')">🎉</span>
+
+</div>
+
+</div>
+
 </body>
-</html> 
+</html>
