@@ -204,7 +204,8 @@ margin-top:6px;
 margin:15px;
 background:white;
 border-radius:15px;
-overflow:hidden;
+max-height:65vh;
+overflow-y:auto;
 }
 
 .chatItem{
@@ -606,7 +607,11 @@ const messages=document.getElementById("messages");
 
 onValue(ref(db,"chats/"+currentChatRoom),(snapshot)=>{
 
-messages.innerHTML="";
+if(!selectionMode){
+    messages.innerHTML="";
+} else {
+  return;
+}
 
 let unreadCount = 0;
 
@@ -616,13 +621,20 @@ const key = child.key;
 const msg = child.val();
 
 if(
+    msg.deletedFor &&
+    msg.deletedFor[auth.currentUser.uid]
+){
+    return;
+}
+
+if(
     msg.receiver == auth.currentUser.uid &&
     msg.seen == false
 ){
   
   unreadCount++;
 
-    update(
+   update(
         ref(
             db,
             "chats/" +
@@ -638,6 +650,71 @@ if(
 }
 
 const div=document.createElement("div");
+div.dataset.key = key;
+div.dataset.text = msg.text || "";
+
+let pressTimer;
+
+div.ontouchstart = function(){
+
+pressTimer = setTimeout(()=>{
+
+selectionMode = true;
+
+if(!selectedMessages.includes(key)){
+    selectedMessages.push(key);
+}
+
+div.style.outline = "3px solid #25D366";
+div.style.backgroundColor = "#dcf8c6";
+
+updateSelectionBar();
+
+},600);
+
+};
+
+div.ontouchend = function(e){
+startX = e.touches[0].clientX;
+clearTimeout(pressTimer);
+
+};
+
+div.ontouchend = function(){
+  
+    clearTimeout(pressTimer);
+
+};
+
+div.onclick = function(){
+
+    if(!selectionMode) return;
+
+    if(selectedMessages.includes(key)){
+
+        selectedMessages =
+        selectedMessages.filter(id => id !== key);
+
+        div.style.outline = "none";
+
+    }else{
+
+        selectedMessages.push(key);
+
+        div.style.outline = "3px solid #25D366";
+
+    }
+
+    if(selectedMessages.length == 0){
+
+        selectionMode = false;
+
+    }
+
+    updateSelectionBar();
+
+};
+
 div.style.animation = "msgPop 0.25s ease";
 
 div.style.padding="10px";
@@ -679,8 +756,7 @@ if(msg.sender==auth.currentUser.uid){
 div.innerHTML=`
 ${msg.sender!=auth.currentUser.uid ? `<b>${msg.senderName}</b><br>` : ""}
 
-${
-msg.image
+${msg.image
 ?
 `<img
 src="${msg.image}"
@@ -691,8 +767,34 @@ margin-top:5px;
 cursor:pointer;
 ">`
 :
-`<span>${msg.text}</span>`
+`
+${msg.replyText ? `
+<div style="
+background:#e9edef;
+border-left:4px solid #25D366;
+padding:6px 8px;
+border-radius:6px;
+margin-bottom:6px;
+font-size:13px;
+color:#555;
+">
+${msg.replyText}
+</div>
+` : ""}
+
+<span>${msg.text}</span>
+`
 }
+
+${msg.starred ? `
+<div style="
+color:#f4b400;
+font-size:16px;
+margin-top:3px;
+">
+⭐
+</div>
+` : ""}
 
 <div style="
 font-size:11px;
@@ -728,6 +830,7 @@ messages.scrollTo({
 });
 
 }
+
 window.sendMessage = async function () {
 
     let text = document.getElementById("messageInput").value.trim();
@@ -744,13 +847,16 @@ window.sendMessage = async function () {
 
         sender:user.uid,
         senderName:user.displayName || "User",
-
         receiver:selectedUserId,
-
         text:text,
-
+        
+        replyld:replyMessageId,
+        replyText:replyMessageText,
+        
         time:Date.now(),
-        seen:false
+        seen:false,
+        
+        deletedFor:{}
 
     });
     await set(
@@ -791,6 +897,7 @@ get(
 });
 
     document.getElementById("messageInput").value="";
+    cancelReply();
 
 }
 
@@ -822,12 +929,46 @@ window.uploadImage = async function(file){
             sender:user.uid,
             senderName:user.displayName || "User",
             receiver:selectedUserId,
-
             image:imageURL,
-
-            time:Date.now()
+            time:Date.now(),
+            seen:false,
+            deletedFor:{}
 
         });
+        await set(
+    ref(db, "chatList/" + auth.currentUser.uid + "/" + selectedUserId),
+    {
+        uid: selectedUserId,
+        name: selectedUserName,
+        lastMessage: "📷 Photo",
+        time: Date.now()
+    }
+);
+
+await set(
+    ref(db, "chatList/" + selectedUserId + "/" + auth.currentUser.uid),
+    {
+        uid: auth.currentUser.uid,
+        name: auth.currentUser.displayName || "User",
+        lastMessage: "📷 Photo",
+        time: Date.now()
+    }
+);
+
+get(
+    ref(db, "chatList/" + selectedUserId + "/" + auth.currentUser.uid + "/unread")
+).then((snap) => {
+
+    let count = snap.val() || 0;
+
+    update(
+        ref(db, "chatList/" + selectedUserId + "/" + auth.currentUser.uid),
+        {
+            unread: count + 1
+        }
+    );
+
+});
 
     }catch(err){
 
@@ -837,10 +978,12 @@ window.uploadImage = async function(file){
 
 }
 onChildAdded(ref(db, "messages"), (snapshot) => {
-
+    const key = snapshort.key;
     const msg = snapshot.val();
 
     const div = document.createElement("div");
+    div.dataset.key = key;
+div.dataset.text = msg.text || "";
 
     div.style.background = "#DCF8C6";
     div.style.padding = "10px";
@@ -861,6 +1004,10 @@ onChildAdded(ref(db, "messages"), (snapshot) => {
 let selectedUserId = "";
 let selectedUserName = "";
 let currentChatRoom = "";
+let selectedMessages = [];
+let selectionMode = false;
+let replyMessageId = "";
+let replyMessageText = "";
 
 function getChatRoomId(uid1, uid2){
 
@@ -1065,10 +1212,215 @@ window.addEventListener("popstate", function () {
 
 // History me ek state add kar do
 history.pushState(null, "", location.href);
+
+window.updateSelectionBar = function(){
+
+const bar = document.getElementById("selectionBar");
+const header = document.getElementById("chatHeader");
+const count = document.getElementById("selectedCount");
+
+if(selectedMessages.length > 0){
+
+    bar.style.display = "flex";
+    header.style.display = "none";
+
+    count.innerHTML = selectedMessages.length;
+
+}else{
+
+    bar.style.display = "none";
+    header.style.display = "flex";
+
+}
+
+}
+
+window.clearSelection = function(){
+
+    selectionMode = false;
+    selectedMessages = [];
+
+    document.querySelectorAll("#messages > div").forEach(msg=>{
+
+        msg.style.outline = "none";
+
+        if(msg.style.marginLeft=="auto"){
+
+            msg.style.background="#DCF8C6";
+
+        }else{
+
+            msg.style.background="#FFFFFF";
+
+        }
+
+    });
+
+    updateSelectionBar();
+
+}
+
+window.copySelectedMessage = async function(){
+
+
+    if(selectedMessages.length != 1){
+
+        alert("Please select only one message.");
+        return;
+
+    }
+
+    const msg = document.querySelector(
+        '[data-key="'+selectedMessages[0]+'"]'
+    );
+
+    if(!msg) return;
+
+    await navigator.clipboard.writeText(
+        msg.dataset.text
+    );
+
+    alert("Message Copied 📋");
+
+    clearSelection();
+
+}
+
+window.openMessageMenu = function(){
+
+    if(selectedMessages.length==0){
+        return;
+    }
+
+    document.getElementById("messageMenu").style.display="block";
+
+}
+
+
+window.closeMessageMenu = function(){
+
+    document.getElementById("messageMenu").style.display="none";
+    clearSelection();
+
+}
+
+
+
+window.deleteSelectedMessages = async function(type){
+
+    if(selectedMessages.length==0) return;
+
+
+    for(let id of selectedMessages){
+
+        let messageRef = ref(
+            db,
+            "chats/"+currentChatRoom+"/"+id
+        );
+
+
+if(type=="everyone"){
+
+    await update(messageRef,{
+        text:"This message was deleted",
+        image:null,
+        deleted:true
+    });
+
+}
+else{
+
+    await update(messageRef,{
+        ["deletedFor/" + auth.currentUser.uid]: true
+    });
+
+}
+
+    }
+
+
+    selectedMessages=[];
+    selectionMode=false;
+    
+    clearSelection();
+    loadPrivateMessages();
+    
+    document.getElementById("messageMenu").style.display="none";
+
+    updateSelectionBar();
+
+}
+window.starSelectedMessage = async function(){
+
+    if(selectedMessages.length != 1){
+        alert("Please select only one message.");
+        return;
+    }
+
+    const messageRef = ref(
+        db,
+        "chats/" + currentChatRoom + "/" + selectedMessages[0]
+    );
+
+    await update(messageRef,{
+        starred:true
+    });
+console.log("Selected:", selectedMessages[0]);
+
+    clearSelection();
+    
+    loadPrivateMessages();
+
+}
+window.replySelectedMessage = function(){
+
+    if(selectedMessages.length != 1){
+        alert("Please select only one message.");
+        return;
+    }
+
+    const messageRef = ref(
+        db,
+        "chats/" + currentChatRoom + "/" + selectedMessages[0]
+    );
+
+    get(messageRef).then((snapshot)=>{
+
+        const data = snapshot.val();
+
+        if(!data) return;
+
+        if(data.sender == auth.currentUser.uid){
+
+            alert("❌ You can only reply to other person's messages.");
+
+            clearSelection();
+            return;
+        }
+
+        replyMessageId = selectedMessages[0];
+        replyMessageText = data.text || "📷 Photo";
+
+        document.getElementById("replyText").innerHTML = replyMessageText;
+        document.getElementById("replyBox").style.display = "block";
+
+        clearSelection();
+
+    });
+
+}
+window.cancelReply = function(){
+
+    replyMessageId = "";
+    replyMessageText = "";
+
+    document.getElementById("replyBox").style.display = "none";
+    document.getElementById("replyText").innerHTML = "";
+
+}
 </script>
 
 <div id="home">
-
 
 <div id="homeHeader">
 
@@ -1108,6 +1460,32 @@ Logout
 </div>
 
 </div>
+<div id="messageMenu" style="
+display:none;
+position:fixed;
+bottom:0;
+left:0;
+width:100%;
+background:white;
+border-radius:20px 20px 0 0;
+padding:20px;
+box-shadow:0 -5px 20px rgba(0,0,0,.3);
+z-index:99999;
+">
+
+<button onclick="deleteSelectedMessages('me')">
+🗑 Delete for Me
+</button>
+
+<button onclick="deleteSelectedMessages('everyone')">
+🌍 Delete for Everyone
+</button>
+
+<button onclick="closeMessageMenu()">
+❌ Cancel
+</button>
+
+</div>
 <div id="chatScreen" style="display:none;">
 
 <div style="
@@ -1121,7 +1499,47 @@ justify-content:space-between;
 align-items:center;
 ">
   
-<div onclick="backHome()" style="
+  <div id="selectionBar" style="
+display:none;
+background:#075E54;
+color:white;
+padding:15px;
+align-items:center;
+justify-content:space-between;
+">
+
+<div style="display:flex;align-items:center;gap:15px;">
+
+<span onclick="clearSelection()" style="
+font-size:24px;
+cursor:pointer;
+">
+←
+</span>
+
+<span id="selectedCount">
+0 Selected
+</span>
+
+</div>
+
+<div style="display:flex;gap:20px;font-size:22px;">
+
+<span onclick="starSelectedMessage()">⭐</span>
+
+<span onclick="replySelectedMessage()">↩️</span>
+
+<span onclick="copySelectedMessage()">📋</span>
+
+<span onclick="openMessageMenu()">🗑️</span>
+
+<span onclick="openMoreMenu()">⋮</span>
+
+</div>
+
+</div>
+  
+<div id="chatHeader" onclick="backHome()" style="
 display:flex;
 align-items:center;
 cursor:pointer;
@@ -1141,8 +1559,10 @@ font-weight:bold;
 color:white;
 margin-right:10px;
 ">
-U
+
 </div>
+
+
 
 <div style="display:flex;flex-direction:column;">
 
@@ -1172,13 +1592,57 @@ Offline
 </div>
 
 <div id="messages" style="
-height:60vh;
+height:calc(110vh - 235px);
 overflow-y:auto;
 background:#efeae2 url("https://www.transparenttextures.com/patterns/45-degree-fabric-light.png");
 background-size:250px;
 background-repeat:repeat;
 padding:10px;
 ">
+
+</div>
+
+<div id="replyBox" style="
+display:none;
+background:#f0f2f5;
+padding:10px;
+border-left:4px solid #25D366;
+margin:5px 10px;
+border-radius:8px;
+">
+
+<div style="
+display:flex;
+justify-content:space-between;
+align-items:center;
+">
+
+<div>
+
+<div style="
+font-weight:bold;
+color:#075E54;
+">
+Replying to
+</div>
+
+<div id="replyText" style="
+color:#555;
+font-size:14px;
+margin-top:3px;
+">
+</div>
+
+</div>
+
+<span onclick="cancelReply()" style="
+cursor:pointer;
+font-size:20px;
+">
+❌
+</span>
+
+</div>
 
 </div>
 
