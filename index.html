@@ -280,6 +280,339 @@ justify-content:center;
 align-items:center;
 font-weight:bold;
 }
+
+/* ===== VCHAT HOME SCREEN - STEP 1 ===== */
+
+#home{
+    width:100%;
+    height:100vh;
+    background:#f0f2f5;
+    color:#111;
+    overflow:hidden;
+}
+
+#homeHeader{
+    height:65px;
+    background:#075E54;
+    color:white;
+    padding:0 18px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    font-size:24px;
+    font-weight:bold;
+}
+
+#vchatHeaderTitle{
+    font-size:25px;
+    font-weight:bold;
+}
+
+#headerIcons{
+    display:flex;
+    align-items:center;
+    gap:24px;
+    font-size:24px;
+}
+
+#headerIcons span{
+    cursor:pointer;
+    user-select:none;
+}
+
+#chatSearchBox{
+    background:#075E54;
+    padding:8px 12px 12px;
+}
+
+#chatSearchInput{
+    width:100%;
+    height:45px;
+    margin:0;
+    padding:10px 15px;
+    border:none;
+    border-radius:25px;
+    background:white;
+    font-size:16px;
+    outline:none;
+}
+
+#profileCard{
+    margin:10px 10px 5px;
+    padding:12px 15px;
+    background:white;
+    border-radius:12px;
+    display:flex;
+    align-items:center;
+    box-shadow:0 1px 3px rgba(0,0,0,.15);
+}
+
+#profileAvatar{
+    width:52px;
+    height:52px;
+    min-width:52px;
+    border-radius:50%;
+    background:#25D366;
+    color:white;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-size:23px;
+    font-weight:bold;
+    margin-right:13px;
+}
+
+#profileDetails{
+    flex:1;
+}
+
+#profileName{
+    font-size:18px;
+    font-weight:bold;
+    color:#222;
+}
+
+#profileEmail{
+    font-size:13px;
+    color:#667781;
+    margin-top:4px;
+}
+
+#chatList{
+    margin:5px 0 0;
+    background:white;
+    border-radius:0;
+    height:calc(100vh - 155px);
+    max-height:none;
+    overflow-y:auto;
+}
+
+.chatItem{
+    display:flex;
+    align-items:center;
+    padding:12px 15px;
+    min-height:72px;
+    background:white;
+    border-bottom:1px solid #eee;
+    cursor:pointer;
+}
+
+.chatItem:active{
+    background:#f0f0f0;
+}
+
+.avatar{
+    width:52px;
+    height:52px;
+    min-width:52px;
+    border-radius:50%;
+    background:#25D366;
+    color:white;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-size:22px;
+    font-weight:bold;
+    margin-right:13px;
+}
+
+.chatInfo{
+    flex:1;
+    min-width:0;
+}
+
+.chatName{
+    font-size:17px;
+    font-weight:bold;
+    color:#111;
+}
+
+.chatLast{
+    font-size:14px;
+    color:#667781;
+    margin-top:5px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+
+.unreadBadge{
+    width:22px;
+    height:22px;
+    min-width:22px;
+    border-radius:50%;
+    background:#25D366;
+    color:white;
+    font-size:12px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-weight:bold;
+    margin-left:8px;
+}
+
+#welcomeText{
+    display:none;
+}
+
+#logoutButton{
+    display:none;
+}
+
+/* Mobile adjustment */
+@media(max-width:480px){
+
+    #homeHeader{
+        height:60px;
+        padding:0 16px;
+    }
+
+    #vchatHeaderTitle{
+        font-size:23px;
+    }
+
+    #headerIcons{
+        gap:20px;
+        font-size:22px;
+    }
+
+    #profileCard{
+        margin:8px;
+    }
+
+}
+
+/* ===== HOME MORE MENU ===== */
+
+#homeMoreMenu{
+    display:none;
+    position:fixed;
+    top:70px;
+    right:10px;
+    width:210px;
+    background:white;
+    border-radius:14px;
+    box-shadow:0 5px 25px rgba(0,0,0,.3);
+    z-index:9999;
+    overflow:hidden;
+}
+
+.homeMenuTitle{
+    background:#075E54;
+    color:white;
+    padding:15px;
+    font-size:18px;
+    font-weight:bold;
+}
+
+.homeMenuItem{
+    display:flex;
+    align-items:center;
+    gap:15px;
+    padding:16px;
+    font-size:16px;
+    color:#222;
+    cursor:pointer;
+    border-bottom:1px solid #eee;
+}
+
+.homeMenuItem:active{
+    background:#f0f0f0;
+}
+
+.homeMenuItem span{
+    flex:1;
+}
+
+.cancelItem{
+    color:#d32f2f;
+}
+
+/* ===== PROFILE SCREEN ===== */
+
+#profileScreen{
+    display:none;
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100vh;
+    background:#f0f2f5;
+    z-index:10000;
+    overflow-y:auto;
+}
+
+#profileHeader{
+    height:65px;
+    background:#075E54;
+    color:white;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 18px;
+    font-size:22px;
+    font-weight:bold;
+}
+
+#profileHeader span:first-child{
+    font-size:30px;
+    cursor:pointer;
+}
+
+#profileMain{
+    text-align:center;
+    padding:30px 15px;
+}
+
+#bigProfileAvatar{
+    width:120px;
+    height:120px;
+    margin:0 auto 15px;
+    border-radius:50%;
+    background:#25D366;
+    color:white;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:55px;
+    font-weight:bold;
+}
+
+#profileScreenName{
+    font-size:25px;
+    font-weight:bold;
+    color:#222;
+}
+
+#profileScreenEmail{
+    margin-top:5px;
+    color:#667781;
+    font-size:15px;
+}
+
+.profileInfoBox{
+    text-align:left;
+    background:white;
+    margin:20px 5px 0;
+    padding:15px;
+    border-radius:12px;
+    box-shadow:0 1px 3px rgba(0,0,0,.12);
+}
+
+.profileInfoTitle{
+    color:#075E54;
+    font-size:13px;
+    font-weight:bold;
+    margin-bottom:6px;
+}
+
+#profileScreenNameInfo,
+#profileScreenEmailInfo,
+#profileAboutInfo{
+    color:#222;
+    font-size:16px;
+    word-break:break-word;
+}
 </style>
 </head>
 
@@ -628,7 +961,7 @@ if(
 }
 
 if(
-    msg.receiver == auth.currentUser.uid &&
+   msg.receiver == auth.currentUser.uid &&
     msg.seen == false
 ){
   
@@ -1418,48 +1751,295 @@ window.cancelReply = function(){
     document.getElementById("replyText").innerHTML = "";
 
 }
+
+// ===== HOME SEARCH =====
+
+window.focusChatSearch = function(){
+
+    const box = document.getElementById("chatSearchBox");
+    const input = document.getElementById("chatSearchInput");
+
+    if(box.style.display === "none" || box.style.display === ""){
+
+        box.style.display = "block";
+
+        setTimeout(function(){
+            input.focus();
+        },100);
+
+    }else{
+
+        box.style.display = "none";
+        input.value = "";
+
+        searchChats();
+    }
+
+};
+
+
+window.searchChats = function(){
+
+    const input = document.getElementById("chatSearchInput");
+
+    const searchText =
+        input.value.toLowerCase().trim();
+
+    const chats =
+        document.querySelectorAll("#chatList .chatItem");
+
+    chats.forEach(function(chat){
+
+        const nameElement =
+            chat.querySelector(".chatName");
+
+        if(!nameElement) return;
+
+        const name =
+            nameElement.innerText.toLowerCase();
+
+        if(name.includes(searchText)){
+
+            chat.style.display = "flex";
+
+        }else{
+
+            chat.style.display = "none";
+
+        }
+
+    });
+
+};
+
+// ===== HOME MORE MENU =====
+
+window.openHomeMenu = function(){
+
+    const menu =
+        document.getElementById("homeMoreMenu");
+
+    menu.style.display = "block";
+
+};
+
+
+window.closeHomeMenu = function(){
+
+    const menu =
+        document.getElementById("homeMoreMenu");
+
+    menu.style.display = "none";
+
+};
+
+
+window.openProfile = function(){
+
+    closeHomeMenu();
+
+    const user = auth.currentUser;
+
+    if(!user) return;
+
+    const name = user.displayName || "User";
+    const email = user.email || "";
+
+    document.getElementById("bigProfileAvatar").innerHTML =
+        name.charAt(0).toUpperCase();
+
+    document.getElementById("profileScreenName").innerHTML =
+        name;
+
+    document.getElementById("profileScreenEmail").innerHTML =
+        email;
+
+    document.getElementById("profileScreenNameInfo").innerHTML =
+        name;
+
+    document.getElementById("profileScreenEmailInfo").innerHTML =
+        email;
+
+    document.getElementById("profileScreen").style.display =
+        "block";
+
+};
+
+
+window.closeProfile = function(){
+
+    document.getElementById("profileScreen").style.display =
+        "none";
+
+};
+
+
+window.openSettings = function(){
+
+    closeHomeMenu();
+
+    alert("Settings feature coming soon ⚙️");
+
+};
+  
 </script>
 
 <div id="home">
 
-<div id="homeHeader">
+    <!-- VChat Header -->
+    <div id="homeHeader">
 
-<div>
-💚 VChat
+        <div id="vchatHeaderTitle">
+            VChat
+        </div>
+
+        <div id="headerIcons">
+            <span onclick="focusChatSearch()">🔍</span>
+            <span onclick="openHomeMenu()">⋮</span>
+        </div>
+
+    </div>
+
+    <!-- Search Box -->
+    <div id="chatSearchBox" style="display:none;">
+        <input
+            type="text"
+            id="chatSearchInput"
+            placeholder="Search chats..."
+            oninput="searchChats()"
+        >
+    </div>
+
+    <!-- Profile -->
+    <div id="profileCard">
+
+        <div id="profileAvatar">
+            U
+        </div>
+
+        <div id="profileDetails">
+
+            <div id="profileName">
+                User Name
+            </div>
+
+            <div id="profileEmail">
+                Email Address
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Chats -->
+    <div id="chatList"></div>
+
+    <!-- Empty / Welcome text -->
+    <p id="welcomeText">
+        Welcome to VChat 🎉
+    </p>
+
+    <!-- Logout -->
+    <button onclick="logout()" id="logoutButton">
+        Logout
+    </button>
+
 </div>
 
-<div id="headerIcons">
-🔍
-⋮
 </div>
 
+<!-- HOME MORE MENU -->
+<div id="homeMoreMenu">
+
+    <div class="homeMenuTitle">
+        VChat
+    </div>
+
+    <div class="homeMenuItem" onclick="openProfile()">
+        👤
+        <span>Profile</span>
+    </div>
+
+    <div class="homeMenuItem" onclick="openSettings()">
+        ⚙️
+        <span>Settings</span>
+    </div>
+
+    <div class="homeMenuItem" onclick="logout()">
+        🚪
+        <span>Logout</span>
+    </div>
+
+    <div class="homeMenuItem cancelItem" onclick="closeHomeMenu()">
+        ❌
+        <span>Cancel</span>
+    </div>
+
 </div>
 
-<div id="homeBody">
+<!-- PROFILE SCREEN -->
+<div id="profileScreen">
 
-<div id="profileCard">
+    <div id="profileHeader">
+        <span onclick="closeProfile()">←</span>
+        <span>Profile</span>
+        <span></span>
+    </div>
 
-<div id="profileName">
-User Name
+    <div id="profileMain">
+
+        <div id="bigProfileAvatar">
+            U
+        </div>
+
+        <div id="profileScreenName">
+            User Name
+        </div>
+
+        <div id="profileScreenEmail">
+            Email Address
+        </div>
+
+        <div class="profileInfoBox">
+
+            <div class="profileInfoTitle">
+                Name
+            </div>
+
+            <div id="profileScreenNameInfo">
+                User Name
+            </div>
+
+        </div>
+
+        <div class="profileInfoBox">
+
+            <div class="profileInfoTitle">
+                Email
+            </div>
+
+            <div id="profileScreenEmailInfo">
+                Email Address
+            </div>
+
+        </div>
+
+        <div class="profileInfoBox">
+
+            <div class="profileInfoTitle">
+                About
+            </div>
+
+            <div id="profileAboutInfo">
+                Hey there! I am using VChat.
+            </div>
+
+        </div>
+
+    </div>
+
 </div>
-
-<div id="profileEmail">
-Email Address
-</div>
-
-</div>
-
-<div id="chatList"></div>
-
-<p>Welcome to VChat 🎉</p>
-
-<button onclick="logout()">
-Logout
-</button>
-
-</div>
-
-</div>
+  
 <div id="messageMenu" style="
 display:none;
 position:fixed;
