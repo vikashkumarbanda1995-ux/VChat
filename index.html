@@ -630,6 +630,12 @@ font-weight:bold;
 #changePhotoButton:active{
     background:#1fb85a;
 }
+
+
+/* VChat bottom navigation */
+
+
+
 </style>
 </head>
 
@@ -993,6 +999,12 @@ window.openFullScreenPhoto = function(imageURL) {
     let scale = 1;
     let startScale = 1;
     let startDistance = 0;
+    
+    let translateX = 0;
+    let translateY = 0;
+    let lastTouchX = 0;
+    let lastTouchY = 0;
+
 
     function getDistance(touches) {
         const dx = touches[0].clientX - touches[1].clientX;
@@ -1000,9 +1012,17 @@ window.openFullScreenPhoto = function(imageURL) {
         return Math.hypot(dx, dy);
     }
 
-    function updateZoom() {
-        img.style.transform = `scale(${scale})`;
+    
+function updateZoom() {
+    if (scale <= 1) {
+        translateX = 0;
+        translateY = 0;
     }
+
+    img.style.transform =
+        `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+}
+
 
     // Pinch zoom with two fingers
     viewer.addEventListener("touchstart", function(e) {
@@ -1053,6 +1073,39 @@ window.openFullScreenPhoto = function(imageURL) {
             lastTap = now;
         }
     });
+    
+// Move zoomed photo with one finger
+viewer.addEventListener("touchstart", function(e) {
+    if (e.touches.length === 1) {
+        lastTouchX = e.touches[0].clientX;
+        lastTouchY = e.touches[0].clientY;
+    }
+}, { passive: false });
+
+viewer.addEventListener("touchmove", function(e) {
+    if (e.touches.length !== 1 || scale <= 1) {
+        return;
+    }
+
+    e.preventDefault();
+
+    const touch = e.touches[0];
+
+    translateX += touch.clientX - lastTouchX;
+    translateY += touch.clientY - lastTouchY;
+
+    lastTouchX = touch.clientX;
+    lastTouchY = touch.clientY;
+
+    // Keep photo within reasonable limits
+    const maxX = img.clientWidth * (scale - 1) / 2;
+    const maxY = img.clientHeight * (scale - 1) / 2;
+
+    translateX = Math.max(-maxX, Math.min(maxX, translateX));
+    translateY = Math.max(-maxY, Math.min(maxY, translateY));
+
+    updateZoom();
+}, { passive: false });
 
     // Keep existing phone Back behavior
     history.pushState(
@@ -1529,8 +1582,62 @@ function formatTime(time){
     });
 
 }
-window.loadUsers = function () {
 
+
+window.loadHomeProfilePhoto = async function() {
+
+    const user = auth.currentUser;
+
+    if (!user) return;
+
+    const avatar =
+        document.getElementById("profileAvatar");
+
+    if (!avatar) return;
+
+    const name = user.displayName || "User";
+
+    avatar.textContent =
+        name.charAt(0).toUpperCase();
+
+    try {
+
+        const snapshot = await get(
+            ref(db, "users/" + user.uid + "/photoURL")
+        );
+
+        const photoURL = snapshot.val();
+
+        if (!photoURL) return;
+
+        avatar.innerHTML = "";
+
+        const img = document.createElement("img");
+
+        img.src = photoURL;
+
+        img.style.cssText = `
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        `;
+
+        avatar.appendChild(img);
+
+    } catch (error) {
+
+        console.error(
+            "Home profile photo error:",
+            error
+        );
+
+    }
+
+};
+
+window.loadUsers = function () {
+loadHomeProfilePhoto();
 const chatList = document.getElementById("chatList");
 
 chatList.innerHTML = "";
@@ -1549,9 +1656,23 @@ chatList.innerHTML += `
 
 <div class="chatItem" onclick="openPrivateChat('${data.uid}','${data.name}')">
 
+
 <div class="avatar">
-${data.name.charAt(0).toUpperCase()}
+${data.photoURL
+    ? `<img
+        src="${data.photoURL}"
+        alt="Profile"
+        style="
+            width:100%;
+            height:100%;
+            border-radius:50%;
+            object-fit:cover;
+        "
+       >`
+    : data.name.charAt(0).toUpperCase()
+}
 </div>
+
 
 <div class="chatInfo">
 
@@ -2026,36 +2147,79 @@ window.closeHomeMenu = function(){
 };
 
 
-window.openProfile = function(){
+
+window.openProfile = async function() {
 
     closeHomeMenu();
 
     const user = auth.currentUser;
 
-    if(!user) return;
+    if (!user) return;
 
     const name = user.displayName || "User";
     const email = user.email || "";
 
-    document.getElementById("bigProfileAvatar").innerHTML =
+    const avatar =
+        document.getElementById("bigProfileAvatar");
+
+    // Show name initial while photo loads
+    avatar.textContent =
         name.charAt(0).toUpperCase();
 
-    document.getElementById("profileScreenName").innerHTML =
+    document.getElementById("profileScreenName").textContent =
         name;
 
-    document.getElementById("profileScreenEmail").innerHTML =
+    document.getElementById("profileScreenEmail").textContent =
         email;
 
-    document.getElementById("profileScreenNameInfo").innerHTML =
+    document.getElementById("profileScreenNameInfo").textContent =
         name;
 
-    document.getElementById("profileScreenEmailInfo").innerHTML =
+    document.getElementById("profileScreenEmailInfo").textContent =
         email;
 
     document.getElementById("profileScreen").style.display =
         "block";
 
+    try {
+
+        // Read saved photo from Firebase
+        const snapshot = await get(
+            ref(db, "users/" + user.uid + "/photoURL")
+        );
+
+        const photoURL = snapshot.val();
+
+        if (photoURL) {
+
+            avatar.innerHTML = "";
+
+            const img = document.createElement("img");
+
+            img.src = photoURL;
+
+            img.style.cssText = `
+                width: 100%;
+                height: 100%;
+                border-radius: 50%;
+                object-fit: cover;
+            `;
+
+            avatar.appendChild(img);
+
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Profile photo loading failed:",
+            error
+        );
+
+    }
+
 };
+
 
 
 window.closeProfile = function(){
@@ -2076,60 +2240,115 @@ window.openSettings = function(){
 
 // ===== UPLOAD PROFILE PHOTO =====
 
-window.uploadProfilePhoto = async function(file){
 
-    if(!file) return;
+window.uploadProfilePhoto = async function(file) {
+
+    if (!file) return;
 
     const user = auth.currentUser;
 
-    if(!user){
+    if (!user) {
         alert("Please login first.");
         return;
     }
 
-    try{
+    // Accept images only
+    if (!file.type.startsWith("image/")) {
+        alert("Please select an image.");
+        return;
+    }
 
-        const fileName =
-            "profile_" + user.uid + "_" + Date.now();
+    try {
 
-        const photoRef = storageRef(
-            storage,
-            "profilePhotos/" + fileName
+        // Compress photo to a small square
+        const image = await createImageBitmap(file);
+
+        const canvas = document.createElement("canvas");
+        canvas.width = 200;
+        canvas.height = 200;
+
+        const ctx = canvas.getContext("2d");
+
+        const side = Math.min(image.width, image.height);
+        const sx = (image.width - side) / 2;
+        const sy = (image.height - side) / 2;
+
+        ctx.drawImage(
+            image,
+            sx, sy, side, side,
+            0, 0, 200, 200
         );
 
-        await uploadBytes(photoRef, file);
+        const base64Photo =
+            canvas.toDataURL("image/jpeg", 0.65);
 
-        const photoURL =
-            await getDownloadURL(photoRef);
+        image.close();
 
+        // Save in Firebase Realtime Database
         await update(
             ref(db, "users/" + user.uid),
             {
-                photoURL: photoURL
+                photoURL: base64Photo
             }
         );
 
-        document.getElementById("bigProfileAvatar").innerHTML = `
-            <img
-                src="${photoURL}"
-                style="
-                    width:100%;
-                    height:100%;
-                    border-radius:50%;
-                    object-fit:cover;
-                "
-            >
-        `;
+        // Update profile avatar immediately
+        const avatar =
+            document.getElementById("bigProfileAvatar");
+
+        if (avatar) {
+            avatar.innerHTML = "";
+
+            const img = document.createElement("img");
+            img.src = base64Photo;
+
+            img.style.cssText = `
+                width: 100%;
+                height: 100%;
+                border-radius: 50%;
+                object-fit: cover;
+            `;
+
+            avatar.appendChild(img);
+        }
+
+        
+const homeAvatar =
+    document.getElementById("profileAvatar");
+
+if (homeAvatar) {
+    homeAvatar.innerHTML = "";
+
+    const homeImg = document.createElement("img");
+
+    homeImg.src = base64Photo;
+
+    homeImg.style.cssText = `
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
+    `;
+
+    homeAvatar.appendChild(homeImg);
+}
+
 
         alert("Profile Photo Updated 📷");
 
-    }catch(error){
+    } catch (error) {
 
-        alert("Photo Upload Failed!\n" + error.message);
+        console.error("Profile photo error:", error);
+
+        alert(
+            "Photo Upload Failed!\n" +
+            error.message
+        );
 
     }
 
 };
+
   
 </script>
 
@@ -2182,6 +2401,7 @@ window.uploadProfilePhoto = async function(file){
 
     <!-- Chats -->
     <div id="chatList"></div>
+
 
     <!-- Empty / Welcome text -->
     <p id="welcomeText">
