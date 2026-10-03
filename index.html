@@ -631,10 +631,34 @@ font-weight:bold;
     background:#1fb85a;
 }
 
+/* VChat Bottom Navigation */
 
-/* VChat bottom navigation */
+#vchatBottomNav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 65px;
+    background: white;
+    display: flex;
+    z-index: 9999;
+    border-top: 1px solid #ddd;
+}
 
+#chatsTab,
+#statusTab {
+    width: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 17px;
+    font-weight: bold;
+    color: #075E54;
+}
 
+#chatList {
+    padding-bottom: 75px;
+}
 
 </style>
 </head>
@@ -692,7 +716,7 @@ ref as storageRef,
 uploadBytes,
 getDownloadURL
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-storage.js";
-import { getDatabase, ref, push, set, get, onValue, update, remove, onChildAdded } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js";
+import { getDatabase, ref, push, set, get, onValue, update, remove, onChildAdded, off } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js";
 import {
 getAuth,
 createUserWithEmailAndPassword,
@@ -1049,7 +1073,7 @@ function updateZoom() {
             updateZoom();
         }
     }, { passive: false });
-
+    
     viewer.addEventListener("touchend", function(e) {
         if (e.touches.length < 2) {
             startDistance = 0;
@@ -2024,7 +2048,7 @@ window.replySelectedMessage = function(){
         alert("Please select only one message.");
         return;
     }
-
+    
     const messageRef = ref(
         db,
         "chats/" + currentChatRoom + "/" + selectedMessages[0]
@@ -2349,7 +2373,375 @@ if (homeAvatar) {
 
 };
 
-  
+  // STEP 6B - Bottom Navigation
+
+window.showChatsTab = function() {
+    document.getElementById("chatList").style.display = "block";
+    document.getElementById("profileCard").style.display = "flex";
+
+    document.getElementById("chatsTab").style.color = "#075E54";
+    document.getElementById("statusTab").style.color = "#667781";
+    document.getElementById("statusScreen").style.display = "none";
+};
+
+window.showStatusTab = function() {
+    document.getElementById("chatList").style.display = "none";
+    document.getElementById("profileCard").style.display = "none";
+
+    document.getElementById("chatsTab").style.color = "#667781";
+    document.getElementById("statusTab").style.color = "#075E54";
+    document.getElementById("statusScreen").style.display = "block";
+    
+    loadMyStatus();
+    loadFriendsStatus();
+};
+
+// STEP 6E - Status Photo Preview
+
+window.previewStatusPhoto = function(file) {
+
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+        alert("Please select a photo.");
+        return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = function() {
+
+        document.getElementById(
+            "statusPreviewImage"
+        ).src = reader.result;
+
+        document.getElementById(
+            "statusPreview"
+        ).style.display = "flex";
+
+    };
+
+    reader.readAsDataURL(file);
+};
+
+window.closeStatusPreview = function() {
+
+    document.getElementById(
+        "statusPreview"
+    ).style.display = "none";
+
+    document.getElementById(
+        "statusPreviewImage"
+    ).src = "";
+
+    document.getElementById(
+        "statusPhotoInput"
+    ).value = "";
+};
+
+// STEP 6F - Save My Status
+
+window.saveMyStatus = async function() {
+
+    const user = auth.currentUser;
+
+    if (!user) {
+        alert("Please login first.");
+        return;
+    }
+
+    const photo = document.getElementById(
+        "statusPreviewImage"
+    );
+
+    if (!photo.src || !photo.src.startsWith("data:image/")) {
+        alert("Please select a photo.");
+        return;
+    }
+
+    const button = document.getElementById(
+        "saveStatusButton"
+    );
+
+    button.disabled = true;
+    button.innerText = "Posting...";
+
+    try {
+
+        // Compress status photo
+        const image = new Image();
+        image.src = photo.src;
+        await image.decode();
+
+        const canvas = document.createElement("canvas");
+
+        const scale = Math.min(
+            1,
+            600 / Math.max(image.width, image.height)
+        );
+
+        canvas.width = Math.round(image.width * scale);
+        canvas.height = Math.round(image.height * scale);
+
+        const ctx = canvas.getContext("2d");
+
+        ctx.drawImage(
+            image,
+            0, 0,
+            canvas.width,
+            canvas.height
+        );
+
+        const base64Photo =
+            canvas.toDataURL("image/jpeg", 0.65);
+
+        // Firebase Realtime Database
+        const statusRef = push(
+            ref(db, "statuses/" + user.uid)
+        );
+
+        await set(statusRef, {
+            uid: user.uid,
+            name: user.displayName || "User",
+            image: base64Photo,
+            time: Date.now(),
+            expiresAt: Date.now() + 86400000
+        });
+
+        alert("Status Posted Successfully!");
+
+        closeStatusPreview();
+
+    } catch (error) {
+
+        console.error(error);
+        alert("Status failed: " + error.message);
+
+    } finally {
+
+        button.disabled = false;
+        button.innerText = "📤 Post Status";
+
+    }
+
+};
+
+// STEP 6G - Load My Status
+
+// Remove previous My Status listener
+let myStatusUnsubscribe = null;
+
+window.loadMyStatus = function() {
+
+    const user = auth.currentUser;
+
+    if (!user) return;
+
+    if (myStatusUnsubscribe) {
+        myStatusUnsubscribe();
+        myStatusUnsubscribe = null;
+    }
+
+    const statusBox =
+        document.getElementById("myPostedStatus");
+
+    const statusList =
+        document.getElementById("myStatusList");
+
+    myStatusUnsubscribe = onValue(
+        ref(db, "statuses/" + user.uid),
+        (snapshot) => {
+
+            statusList.innerHTML = "";
+
+            let count = 0;
+
+            snapshot.forEach((child) => {
+
+                const status = child.val();
+
+                if (!status || !status.image) return;
+
+                // Hide expired statuses
+                if (status.expiresAt <= Date.now()) {
+                    return;
+                }
+
+                const img = document.createElement("img");
+
+                img.src = status.image;
+
+                img.style.cssText = `
+                    width:85px;
+                    height:110px;
+                    object-fit:cover;
+                    border-radius:10px;
+                    border:2px solid #25D366;
+                    cursor:pointer;
+                    flex-shrink:0;
+                `;
+
+                img.onclick = function() {
+                    openFullScreenPhoto(status.image);
+                };
+
+                statusList.appendChild(img);
+
+                count++;
+
+            });
+
+            statusBox.style.display =
+                count > 0 ? "block" : "none";
+
+        }
+    );
+
+};
+
+// STEP 6H - Load Friends Status
+
+let friendsStatusUnsubscribe = null;
+
+window.loadFriendsStatus = function() {
+
+    const currentUser = auth.currentUser;
+
+    if (!currentUser) return;
+
+    const statusList =
+        document.getElementById("friendsStatusList");
+
+    statusList.innerHTML = "";
+
+    if (friendsStatusUnsubscribe) {
+        friendsStatusUnsubscribe();
+        friendsStatusUnsubscribe = null;
+    }
+
+    friendsStatusUnsubscribe = onValue(
+        ref(db, "statuses"),
+        async (snapshot) => {
+
+            statusList.innerHTML = "";
+
+            let foundStatus = false;
+
+            snapshot.forEach((userStatuses) => {
+
+                const uid = userStatuses.key;
+
+                // Apna status yahan nahi dikhana
+                if (uid === currentUser.uid) return;
+
+                userStatuses.forEach((statusSnap) => {
+
+                    const status = statusSnap.val();
+
+                    if (!status || !status.image) return;
+
+                    // Expired status hide karo
+                    if (
+                        status.expiresAt &&
+                        status.expiresAt <= Date.now()
+                    ) {
+                        return;
+                    }
+
+                    foundStatus = true;
+
+                    const item =
+                        document.createElement("div");
+
+                    item.style.cssText = `
+                        display:flex;
+                        align-items:center;
+                        gap:12px;
+                        padding:10px;
+                        background:#fff;
+                        border-radius:12px;
+                        cursor:pointer;
+                        border:1px solid #eee;
+                    `;
+
+                    const avatar =
+                        document.createElement("div");
+
+                    avatar.style.cssText = `
+                        width:52px;
+                        height:52px;
+                        min-width:52px;
+                        border-radius:50%;
+                        background:#25D366;
+                        display:flex;
+                        align-items:center;
+                        justify-content:center;
+                        overflow:hidden;
+                        color:white;
+                        font-size:20px;
+                        font-weight:bold;
+                    `;
+
+                    avatar.innerHTML =
+                        (status.name || "User")
+                        .charAt(0)
+                        .toUpperCase();
+
+                    const info =
+                        document.createElement("div");
+
+                    info.style.flex = "1";
+
+                    info.innerHTML = `
+                        <div style="
+                            font-size:17px;
+                            font-weight:bold;
+                            color:#222;
+                        ">
+                            ${status.name || "User"}
+                        </div>
+
+                        <div style="
+                            font-size:13px;
+                            color:#777;
+                            margin-top:4px;
+                        ">
+                            Tap to view status
+                        </div>
+                    `;
+
+                    item.appendChild(avatar);
+                    item.appendChild(info);
+
+                    item.onclick = function() {
+                        openFullScreenPhoto(status.image);
+                    };
+
+                    statusList.appendChild(item);
+
+                });
+
+            });
+
+            if (!foundStatus) {
+
+                statusList.innerHTML = `
+                    <div style="
+                        text-align:center;
+                        color:#777;
+                        padding:25px 10px;
+                    ">
+                        No recent updates
+                    </div>
+                `;
+
+            }
+
+        }
+    );
+
+};
+
 </script>
 
 <div id="home">
@@ -2401,7 +2793,149 @@ if (homeAvatar) {
 
     <!-- Chats -->
     <div id="chatList"></div>
+    
+    <!-- VChat Status Screen -->
+<div id="statusScreen" style="
+display:none;
+background:white;
+height:calc(100vh - 130px);
+overflow-y:auto;
+padding:15px;
+">
 
+    <h2 style="color:#075E54;">
+        Status
+    </h2>
+
+    <div onclick="document.getElementById('statusPhotoInput').click()"
+         style="
+         display:flex;
+         align-items:center;
+         gap:15px;
+         padding:20px 0;
+         cursor:pointer;
+         border-bottom:1px solid #ddd;
+         ">
+
+        <div style="
+        width:55px;
+        height:55px;
+        border-radius:50%;
+        background:#25D366;
+        color:white;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        font-size:30px;
+        ">
+            +
+        </div>
+
+        <div>
+            <b style="color:#222;">My Status</b>
+            <p style="color:#777;font-size:13px;">
+                Tap to add status
+            </p>
+        </div>
+
+    </div>
+    
+    <!-- Status Photo Input -->
+<input
+    type="file"
+    id="statusPhotoInput"
+    accept="image/*"
+    style="display:none"
+    onchange="previewStatusPhoto(this.files[0])"
+>
+
+<!-- Status Photo Preview -->
+<div id="statusPreview" style="
+    display:none;
+    position:fixed;
+    inset:0;
+    background:#111;
+    z-index:10001;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    padding:20px;
+">
+
+    <img id="statusPreviewImage" style="
+        max-width:100%;
+        max-height:70vh;
+        object-fit:contain;
+    ">
+    
+    <button
+    id="saveStatusButton"
+    onclick="saveMyStatus()"
+    style="
+        background:#25D366;
+        color:#003366;
+        margin-top:20px;
+    ">
+    📤 Post Status
+</button>
+
+    <button onclick="closeStatusPreview()">
+        ❌ Cancel
+    </button>
+
+</div>
+
+    <!-- My Posted Status -->
+
+<div id="myPostedStatus" style="
+    display:none;
+    margin-top:15px;
+    padding:12px;
+    background:#f0f2f5;
+    border-radius:12px;
+">
+
+    <h3 style="color:#075E54;">
+        My Updates
+    </h3>
+
+    <div id="myStatusList" style="
+        display:flex;
+        gap:10px;
+        overflow-x:auto;
+        margin-top:12px;
+    "></div>
+
+</div>
+
+    <p style="color:#777;margin-top:20px;">
+        Recent Updates
+    </p>
+    
+    <!-- Friends Status List -->
+
+<div id="friendsStatusList" style="
+    margin-top:15px;
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+"></div>
+
+</div>
+    
+    <!-- VChat Bottom Navigation -->
+
+<div id="vchatBottomNav">
+
+    <div id="chatsTab" onclick="showChatsTab()">
+        💬 Chats
+    </div>
+
+    <div id="statusTab" onclick="showStatusTab()">
+        🟢 Status
+    </div>
+
+</div>
 
     <!-- Empty / Welcome text -->
     <p id="welcomeText">
